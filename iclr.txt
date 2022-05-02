@@ -1,0 +1,59 @@
+ICLR notes and highlights
+
+I might have some follow-up emails after this- there are a bunch of papers I’m still digesting (in particular on reinforcement learning, graph neural networks, and anomaly detection). If anything I mention here is of interest to you, let me know and I can prepare to talk about it at TD
+
+DeepMind keynote
+
+There was a keynote from Pushmeet Kohli, the Head of Research for “AI for Science, Robustness, and Reliability” at DeepMind. He spoke at length about how they choose projects to work on and a lot of it hit close to home- in particular, he said that there are three factors they look when selecting a problem:
+
+1. The problem should have high significance or potential impact
+2. The data should be available
+3. There should be a clear objective function (e.g. a success metric)
+
+Editorializing for a moment- we’re not great at evaluating the cost of opportunities lost, but when __ it’s usually because of the second factor. When we have problematic programs that drag on for years without improving, it’s usually because we haven’t done a good job articulating the third factor.
+
+
+Explainable AI
+
+There was also a great keynote by Been Kim of Google Brain. For anyone interested in explainable machine learning, I’d suggest checking out her work- in particular, “An Evaluation of the Human-Interpretability of Explanation” from 2019.
+
+What set her research apart from most explainability work that I’ve seen was including the humans using those explanations (and measuring what they do with that information) as part of the system. She did some compelling demonstrations in her talk to show how commonly-used explainability techniques (e.g. saliency maps for computer vision) can be subject to cognitive biases like confirmation bias.
+
+As far as practical advice goes: she repeatedly stressed the importance of building relevant tests for any explainability system, in particular inserting known errors on purpose to see how that changes the answer. She also referenced the book “The Alignment Problem” by Brian Christian several times.
+
+Christian’s book is a great read and is written to be accessible to nonexperts (the name is a reference to the difficulty of aligning what we ask the computer to do to what we actually want). It’s a bit of a beast but even the first 100 pages are a solid introduction to ethical issues in ML.
+
+Self-Supervision and Weak Supervision
+
+Much of the current focus of AI research is on a set of tricks to get a machine to learn general-purpose knowledge, so that we can adapt those models to our needs for specific problems. This includes self-supervision methods (coming up with a proxy task we can automagically generate labels for) like BERT in NLP and SimCLR in computer vision, and weak supervision methods (building noisy labels from enormous uncurated datasets) like CLIP.
+
+There was a running theme I noticed come up in a number of talks and keynotes concerning these methods: anxiety about the consolidation of model training to a relatively small number of private organizations. Even though the algorithms are public, the resource requirements and data access to train the models add significant barriers to entry for anyone who wants to train their own. Practically, this means that most applications of these methods involve people downloading and using the same few pretrained models.
+
+I’d lump the concerns people had about this into two categories- one was equity; a large feature extractor built by a western company is likely to systematically underrepresent data from African countries, for example. The second was security; if everyone is using the same few models then we all inherit the same risks from those models (more on this below).
+
+If you’re interested in these methods- here are some notable papers that were presented at ICLR (with unsolicited commentary)
+
+* “SCARF: Self-Supervised Contrastive Learning using Random Feature Corruption” by Bahri et al. The big wins for self-supervision so far have been in NLP and computer vision. This is the first really promising method for doing SSL with general tabular data
+* “Supervision Exists Everywhere: A Data Efficient Contrastive Language-Image Pre-Training Paradigm” by Li et al. The CLIP paper came out a bit over a year ago, and has kicked off a ton of interesting research and applications in that time. One of the major limitations of CLIP is the scale of data required to train it (400 million image/text pairs); this paper takes a first stab at alleviating that by showing they can get comparable performance with almost an order of magnitude less data.
+* “VICReg: Variance-Invariance-Covariance Regularization for Self-Supervised Learning” by Bardes et al. Since the SimCLR paper came out two years ago, a lot of SSL literature on computer vision has focused on small modifications to contrastive learning to make it more reliable and cheaper to train (such as the Implicit Feature Modification paper from December). There’s also been a line of papers on algorithms that appear to work but rely on cargo cult-ish hacks (like BYOL and SimSiam); e.g. “this method works if you put a stop-gradient operation right here, but if you take it out the whole thing collapses and nobody knows why”. The VICReg paper is a break from both of these and is hopefully what the future of this field will look like: they carefully lay out the statistical properties they want the learned representation to have, and design a loss function to encourage those properties. I coded it up and have been testing it out on BigEarthNet over the weekend- I’ve been getting somewhat better downstream performance than I did with IFM and seems to be somewhat less dependent on specific hyperparameters.
+* “Poisoning and Backdooring Contrastive Learning” by Carlini et al: since weak-labeled models like CLIP are built on huge uncurated datasets scraped off the internet, it’s possible that someone could try and poison the dataset by releasing modified images online. This paper details how. This probably hasn’t happened yet (and a lot would have to go right for it to work), but as we pull up pretrained models we should probably start thinking through what an adversary could do and  how it would effect any decisions we want to make based on the model. Since everyone is using the same pretrained models, we have to include the possibility of adversarial attacks aimed at someone else.
+
+Out-of-distribution detection
+
+One of the challenges of deploying an ML solution to a problem is that the model may give unreliable answers if the distribution of your data changes. The question of how we detect those changes is related to, but distinct from, the anomaly detection problem.
+
+“IGEOOD: An Information Geometry Approach to Out-of-Distribution Detection” by Gomes et al provides an interesting approach to solving this problem, that could be potentially used to automatically alert you when something has changed.
+
+Slice discovery
+
+Another practical challenge with deployed ML models are that we tend to assess their performance on average benchmarks (accuracy, average precision, etc) but their actual performance may vary wildly on different subsets of your data. This could lead to systems you can usually trust but fail catastrophically in some cases, or unintended ethical consequences (a classic example would be facial recognition models that perform terribly on people of color).
+
+“DOMINO: Discovering Systematic Errors with Cross-Modal Embeddings” by Eyuboglu et al presents a method for automagically discovering interpretable slices of your data where your model sucks. I suspect that for a lot of cases their method will be overkill- the true value of this paper is their work to formalize slice-discovery as a problem we can approach systematically, categorizing different types of slices, aggregating prior work touching this problem and collecting a bunch of application papers with examples of slice performance problems. If you find yourself dealing with problematic subsets in an ML problem, you may find the appendices of this paper really useful.
+
+Object Radiance Fields
+
+“Unsupervised Discovery of Object Radiance Fields” by Yu et al was an interesting modification of the neural radiance field concept. I can’t tell if it’s important or not yet- going to check back and see if anyone can extend this to larger non-toy datasets.
+
+Geometric and Topological Representation Learning Workshop
+
+There were a bunch of day-long workshops on Friday.
